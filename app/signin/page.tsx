@@ -1,9 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/client";
+import Link from "next/link";
+
 
 export default function SignInPage() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState(""); //save email input
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const supabase = createClient();
+  const router = useRouter();
+  
+  const handleAuth =  async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({email, password});
+        if (error) throw error;
+        setMessage("Sign-up successful! Please check your email to confirm your account.");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({email, password});
+        if (error) throw error;
+        setMessage("Sign-in successful! Redirecting...");
+        router.push("/dashboard");
+      }
+    } catch {}
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-200 via-indigo-200 to-purple-200 flex items-center justify-center px-6 py-12">
@@ -20,8 +45,12 @@ export default function SignInPage() {
 
         
         <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-gray-100">
-          <form className="space-y-6">
-            
+          <form className="space-y-6" onSubmit={handleAuth} >
+            {message && (
+              <div className = "p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg">
+                <p className="text-sm text-green-600">Message: {message}</p>
+              </div>
+            )}
             <div>
               <label
                 htmlFor="email"
@@ -33,6 +62,8 @@ export default function SignInPage() {
                 id="email"
                 name="email"
                 type="email"
+                value = {email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="Enter your email"
                 className="mt-2 block w-full px-4 py-2.5 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 text-black focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
@@ -51,6 +82,8 @@ export default function SignInPage() {
                 id="password"
                 name="password"
                 type="password"
+                value = {password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="Enter your password"
                 className="mt-2 block w-full px-4 py-2.5 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 text-black focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
